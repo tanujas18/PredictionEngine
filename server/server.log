@@ -1,0 +1,7 @@
+
+  FIFA Prediction Engine API
+  http://localhost:8788/api/health
+  26 matches · 20 teams · rationale: template
+  latency simulation: 350ms
+  crests ready: 20/20 (cached in .cache/crests)
+
