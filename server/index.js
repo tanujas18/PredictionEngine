@@ -33,7 +33,15 @@ const app = express();
 const PORT = Number(process.env.PORT) || 8788;
 const LATENCY = Number(process.env.API_LATENCY ?? 350);
 
-app.use(cors());
+// CORS configuration - allow requests from Vercel and localhost
+const corsOptions = {
+  origin: process.env.ALLOWED_ORIGINS 
+    ? process.env.ALLOWED_ORIGINS.split(',')
+    : ['http://localhost:5173', 'http://localhost:3000'],
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Fake latency, dev-only teaching aid.
