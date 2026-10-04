@@ -69,6 +69,10 @@ app.use((req, _res, next) => {
 // ---------- serializers: what the frontend actually receives ----------
 
 function teamSummary(team) {
+  // In production (Railway), use full URL for crests so they work from Vercel
+  // In development, use relative path
+  const baseUrl = process.env.API_BASE_URL || '';
+  
   return {
     id: team.id,
     name: team.name,
@@ -77,7 +81,7 @@ function teamSummary(team) {
     color: team.color,
     // Our own URL, not the provider's. If we ever change crest source, the frontend
     // doesn't notice — and the monogram in `monogram` stays as the fallback.
-    crest: `/api/crest/${team.id}`,
+    crest: `${baseUrl}/api/crest/${team.id}`,
     league: team.league,
     rating: team.rating,
     form: team.form,
