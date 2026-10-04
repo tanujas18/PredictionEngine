@@ -1,9 +1,21 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 
-export function useFetch(fetcher, deps = []) {
-  const [data, setData] = useState(null)
-  const [status, setStatus] = useState('idle')
-  const [error, setError] = useState(null)
+type FetchStatus = 'idle' | 'loading' | 'success' | 'error'
+
+interface UseFetchResult<T> {
+  data: T | null
+  status: FetchStatus
+  error: Error | null
+  reload: () => void
+}
+
+export function useFetch<T>(
+  fetcher: () => Promise<T>,
+  deps: React.DependencyList = []
+): UseFetchResult<T> {
+  const [data, setData] = useState<T | null>(null)
+  const [status, setStatus] = useState<FetchStatus>('idle')
+  const [error, setError] = useState<Error | null>(null)
   const [nonce, setNonce] = useState(0)
 
   const activeRef = useRef(true)
@@ -26,7 +38,7 @@ export function useFetch(fetcher, deps = []) {
       }
     } catch (err) {
       if (activeRef.current) {
-        setError(err)
+        setError(err as Error)
         setStatus('error')
       }
     }

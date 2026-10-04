@@ -84,12 +84,17 @@ function TeamProfileSkeleton() {
 }
 
 export default function TeamProfile() {
-  const { id } = useParams()
+  const { id } = useParams<{ id: string }>()
   const { toggle, isFavourite } = useFavourites()
 
+  const teamId = id ?? ''
+
   const { data: team, status, error, reload } = useFetch(
-    () => getTeam(id),
-    [id]
+    () => {
+      if (!teamId) return Promise.resolve(null)
+      return getTeam(teamId)
+    },
+    [teamId]
   )
 
   const isFav = team ? isFavourite(team.id) : false
@@ -99,7 +104,7 @@ export default function TeamProfile() {
   }
 
   if (status === 'error' || !team) {
-    return <ErrorState error={error} onRetry={reload} message={`No team found with ID "${id}"`} />
+    return <ErrorState error={error} onRetry={reload} message={`No team found with ID "${teamId}"`} />
   }
 
   return (
@@ -112,17 +117,21 @@ export default function TeamProfile() {
         <CardHeader className="flex flex-row items-start justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="relative w-20 h-20 rounded-full overflow-hidden flex-shrink-0">
-              <img
-                src={team.crest}
-                alt={team.name}
-                className="w-full h-full object-cover"
-                onError={(e) => { e.target.style.display = 'none'; }}
-              />
+              {team.crest && (
+                <img
+                  src={team.crest}
+                  alt={team.name}
+                  className="w-full h-full object-cover"
+                  onError={(e: React.SyntheticEvent<HTMLImageElement>) => { 
+                    e.currentTarget.style.display = 'none'
+                  }}
+                />
+              )}
               <div
                 className="w-full h-full flex items-center justify-center text-white font-bold text-2xl absolute inset-0"
-                style={{ backgroundColor: team.color }}
+                style={{ backgroundColor: team.color || '#6366f1' }}
               >
-                {team.monogram}
+                {team.monogram || team.short}
               </div>
             </div>
             <div>
@@ -175,25 +184,25 @@ export default function TeamProfile() {
             <h3 className="text-lg font-semibold mb-4">Recent Results</h3>
             {team.results?.length > 0 ? (
               <div className="space-y-2">
-                {team.results.slice(0, 5).map((match) => (
+                {team.results.slice(0, 5).map((match: any) => (
                   <div key={match.id} className="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-800/50 rounded">
                     <div className="flex items-center gap-3">
                       <span
                         className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold"
-                        style={{ backgroundColor: match.home.color }}
+                        style={{ backgroundColor: match.home?.color || '#6366f1' }}
                       >
-                        {match.home.monogram}
+                        {match.home?.monogram || match.home?.short}
                       </span>
-                      <span>{match.home.name}</span>
+                      <span>{match.home?.name}</span>
                     </div>
                     <span className="font-mono">{match.score?.home ?? '-'} - {match.score?.away ?? '-'}</span>
                     <div className="flex items-center gap-3 text-right">
-                      <span>{match.away.name}</span>
+                      <span>{match.away?.name}</span>
                       <span
                         className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold"
-                        style={{ backgroundColor: match.away.color }}
+                        style={{ backgroundColor: match.away?.color || '#6366f1' }}
                       >
-                        {match.away.monogram}
+                        {match.away?.monogram || match.away?.short}
                       </span>
                     </div>
                   </div>
@@ -208,28 +217,28 @@ export default function TeamProfile() {
             <h3 className="text-lg font-semibold mb-4">Upcoming Fixtures</h3>
             {team.fixtures?.length > 0 ? (
               <div className="space-y-2">
-                {team.fixtures.slice(0, 5).map((match) => (
+                {team.fixtures.slice(0, 5).map((match: any) => (
                   <Link key={match.id} to={`/match/${match.id}`} className="block">
                     <div className="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-800/50 rounded hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
                       <div className="flex items-center gap-3">
                         <span
                           className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold"
-                          style={{ backgroundColor: match.home.color }}
+                          style={{ backgroundColor: match.home?.color || '#6366f1' }}
                         >
-                          {match.home.monogram}
+                          {match.home?.monogram || match.home?.short}
                         </span>
-                        <span>{match.home.name}</span>
+                        <span>{match.home?.name}</span>
                       </div>
                       <time className="text-sm text-slate-500 dark:text-slate-400 whitespace-nowrap">
                         {new Date(match.kickoff).toLocaleDateString()}
                       </time>
                       <div className="flex items-center gap-3 text-right">
-                        <span>{match.away.name}</span>
+                        <span>{match.away?.name}</span>
                         <span
                           className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold"
-                          style={{ backgroundColor: match.away.color }}
+                          style={{ backgroundColor: match.away?.color || '#6366f1' }}
                         >
-                          {match.away.monogram}
+                          {match.away?.monogram || match.away?.short}
                         </span>
                       </div>
                     </div>

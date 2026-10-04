@@ -11,17 +11,23 @@ import WinBar from '@/components/WinBar'
 import FactorList from '@/components/FactorList'
 
 export default function MatchDetail() {
-  const { id } = useParams()
-  const { save, remove, pickFor } = usePredictions()
+  const { id } = useParams<{ id: string }>()
+  const predictionsContext = usePredictions()
+  const { save, remove, pickFor } = predictionsContext
+
+  const matchId = id ?? ''
 
   const { data, status, error, reload } = useFetch(
-    () => Promise.all([getMatch(id), getPrediction(id)]),
-    [id]
+    () => {
+      if (!matchId) return Promise.resolve([null, null] as const)
+      return Promise.all([getMatch(matchId), getPrediction(matchId)])
+    },
+    [matchId]
   )
 
-  const match = data?.[0] ?? null
-  const prediction = data?.[1] ?? null
-  const savedPick = pickFor(id)
+  const match: any = data?.[0] ?? null
+  const prediction: any = data?.[1] ?? null
+  const savedPick = pickFor(matchId)
 
   if (status === 'loading') {
     return (
@@ -75,7 +81,7 @@ export default function MatchDetail() {
       <ErrorState
         error={error}
         onRetry={reload}
-        message={`No match found with ID "${id}"`}
+        message={`No match found with ID "${matchId}"`}
       />
     )
   }
@@ -103,33 +109,43 @@ export default function MatchDetail() {
         <CardHeader>
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <div className="flex items-center gap-3">
-              <img
-                src={match.home.crest}
-                alt={match.home.name}
-                className="w-8 h-8 rounded-full object-cover"
-                onError={(e) => { e.target.style.display = 'none'; }}
-              />
+              {match.home.crest && (
+                <img
+                  src={match.home.crest}
+                  alt={match.home.name}
+                  className="w-8 h-8 rounded-full object-cover"
+                  onError={(e: React.SyntheticEvent<HTMLImageElement>) => { 
+                    e.currentTarget.style.display = 'none'
+                  }}
+                />
+              )}
               <CardTitle className="text-2xl">
                 {match.home.name} vs {match.away.name}
               </CardTitle>
-              <img
-                src={match.away.crest}
-                alt={match.away.name}
-                className="w-8 h-8 rounded-full object-cover"
-                onError={(e) => { e.target.style.display = 'none'; }}
-              />
+              {match.away.crest && (
+                <img
+                  src={match.away.crest}
+                  alt={match.away.name}
+                  className="w-8 h-8 rounded-full object-cover"
+                  onError={(e: React.SyntheticEvent<HTMLImageElement>) => { 
+                    e.currentTarget.style.display = 'none'
+                  }}
+                />
+              )}
             </div>
             <Badge variant="secondary">{match.league}</Badge>
           </div>
-          <p className="text-slate-500 dark:text-slate-400 mt-2">{match.stage}</p>
+          {match.stage && <p className="text-slate-500 dark:text-slate-400 mt-2">{match.stage}</p>}
         </CardHeader>
 
         <CardContent className="space-y-6">
           <div className="grid gap-4 md:grid-cols-3">
-            <div className="text-center p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
-              <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">Venue</p>
-              <p className="font-medium">{match.venue}</p>
-            </div>
+            {match.venue && (
+              <div className="text-center p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+                <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">Venue</p>
+                <p className="font-medium">{match.venue}</p>
+              </div>
+            )}
             <div className="text-center p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
               <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">Kickoff</p>
               <time dateTime={match.kickoff} className="font-medium">
@@ -149,9 +165,11 @@ export default function MatchDetail() {
               <p className="text-4xl font-bold tabular-nums">
                 {match.score.home} - {match.score.away}
               </p>
-              <p className="text-slate-500 dark:text-slate-400 mt-1">
-                {match.result === 'draw' ? 'Draw' : match.result === 'home' ? `${match.home.name} win` : `${match.away.name} win`}
-              </p>
+              {match.result && (
+                <p className="text-slate-500 dark:text-slate-400 mt-1">
+                  {match.result === 'draw' ? 'Draw' : match.result === 'home' ? `${match.home.name} win` : `${match.away.name} win`}
+                </p>
+              )}
             </div>
           )}
 
@@ -171,26 +189,28 @@ export default function MatchDetail() {
                   <WinBar probabilities={prediction.probabilities} />
                 </div>
 
-                <div className="grid gap-4 sm:grid-cols-3">
-                  <Card>
-                    <CardContent className="p-4 text-center">
-                      <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">Expected Goals</p>
-                      <p className="text-2xl font-bold">{prediction.expectedGoals.home}</p>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardContent className="p-4 text-center">
-                      <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">Most Likely Scoreline</p>
-                      <p className="text-2xl font-bold">{prediction.scoreline.home} - {prediction.scoreline.away}</p>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardContent className="p-4 text-center">
-                      <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">Expected Goals</p>
-                      <p className="text-2xl font-bold">{prediction.expectedGoals.away}</p>
-                    </CardContent>
-                  </Card>
-                </div>
+                {prediction.expectedGoals && prediction.scoreline && (
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    <Card>
+                      <CardContent className="p-4 text-center">
+                        <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">Expected Goals</p>
+                        <p className="text-2xl font-bold">{prediction.expectedGoals.home}</p>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="p-4 text-center">
+                        <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">Most Likely Scoreline</p>
+                        <p className="text-2xl font-bold">{prediction.scoreline.home} - {prediction.scoreline.away}</p>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="p-4 text-center">
+                        <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">Expected Goals</p>
+                        <p className="text-2xl font-bold">{prediction.expectedGoals.away}</p>
+                      </CardContent>
+                    </Card>
+                  </div>
+                )}
 
                 {prediction.rationale && (
                   <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-800">
@@ -201,10 +221,12 @@ export default function MatchDetail() {
                   </div>
                 )}
 
-                <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
-                  <h4 className="font-medium mb-3">Key Factors</h4>
-                  <FactorList factors={prediction.factors} homeTeam={match.home} awayTeam={match.away} />
-                </div>
+                {prediction.factors && (
+                  <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
+                    <h4 className="font-medium mb-3">Key Factors</h4>
+                    <FactorList factors={prediction.factors} homeTeam={match.home} awayTeam={match.away} />
+                  </div>
+                )}
               </div>
             ) : (
               <p className="text-slate-500 dark:text-slate-400">Prediction data not available</p>
@@ -220,21 +242,21 @@ export default function MatchDetail() {
                 <div className="flex flex-wrap gap-2 mb-4">
                   <Button
                     variant={savedPick?.pick === 'home' ? 'default' : 'outline'}
-                    onClick={() => save(id, 'home', prediction?.pick)}
+                    onClick={() => save(matchId, 'home', prediction?.pick)}
                     disabled={isFinished}
                   >
                     {match.home.name} (Home)
                   </Button>
                   <Button
                     variant={savedPick?.pick === 'draw' ? 'default' : 'outline'}
-                    onClick={() => save(id, 'draw', prediction?.pick)}
+                    onClick={() => save(matchId, 'draw', prediction?.pick)}
                     disabled={isFinished}
                   >
                     Draw
                   </Button>
                   <Button
                     variant={savedPick?.pick === 'away' ? 'default' : 'outline'}
-                    onClick={() => save(id, 'away', prediction?.pick)}
+                    onClick={() => save(matchId, 'away', prediction?.pick)}
                     disabled={isFinished}
                   >
                     {match.away.name} (Away)
@@ -251,7 +273,7 @@ export default function MatchDetail() {
                         </span>
                       )}
                     </span>
-                    <Button variant="ghost" size="sm" onClick={() => remove(id)}>
+                    <Button variant="ghost" size="sm" onClick={() => remove(matchId)}>
                       Remove
                     </Button>
                   </div>

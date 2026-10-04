@@ -3,6 +3,15 @@ import { predictionsReducer, loadInitialPredictions } from './predictionsReducer
 
 const PredictionsContext = createContext(null)
 
+/**
+ * @typedef {Object} PredictionsContextValue
+ * @property {Array<any>} predictions
+ * @property {(matchId: string, pick: string, modelPick?: string) => void} save
+ * @property {(matchId: string) => void} remove
+ * @property {() => void} clear
+ * @property {(matchId: string) => any} pickFor
+ */
+
 export function PredictionsProvider({ children }) {
   const [predictions, dispatch] = useReducer(predictionsReducer, null, loadInitialPredictions)
 
@@ -38,6 +47,9 @@ export function PredictionsProvider({ children }) {
   )
 }
 
+/**
+ * @returns {PredictionsContextValue}
+ */
 export function usePredictions() {
   const context = useContext(PredictionsContext)
   if (!context) {

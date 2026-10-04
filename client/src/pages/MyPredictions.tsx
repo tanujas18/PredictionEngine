@@ -9,7 +9,14 @@ import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Skeleton } from '@/components/ui/skeleton'
 
-function StatTile({ label, value, subLabel, className = '' }) {
+interface StatTileProps {
+  label: string
+  value: string | number
+  subLabel?: string
+  className?: string
+}
+
+function StatTile({ label, value, subLabel, className = '' }: StatTileProps) {
   return (
     <Card className={className}>
       <CardContent className="p-4">
@@ -21,11 +28,17 @@ function StatTile({ label, value, subLabel, className = '' }) {
   )
 }
 
-function PickRow({ prediction, match, onRemove }) {
+interface PickRowProps {
+  prediction: any
+  match: any
+  onRemove: (matchId: string) => void
+}
+
+function PickRow({ prediction, match, onRemove }: PickRowProps) {
   const status = settle(prediction, match)
   const mHit = modelHit(prediction, match)
 
-  const statusConfig = {
+  const statusConfig: Record<string, { variant: 'default' | 'secondary' | 'destructive' | 'outline'; label: string; color: string }> = {
     hit: { variant: 'default', label: 'Hit', color: 'text-green-600 dark:text-green-400' },
     miss: { variant: 'destructive', label: 'Miss', color: 'text-red-600 dark:text-red-400' },
     pending: { variant: 'secondary', label: 'Pending', color: 'text-amber-600 dark:text-amber-400' },
@@ -57,30 +70,42 @@ function PickRow({ prediction, match, onRemove }) {
     <div className="flex items-center justify-between gap-4 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
       <div className="flex items-center gap-4 flex-1 min-w-0">
         <div className="flex items-center gap-2 w-24 flex-shrink-0">
-          <img
-            src={match.home.crest}
-            alt={match.home.name}
-            className="w-8 h-8 rounded-full flex-shrink-0 object-cover"
-            onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
-          />
-          <span
-            className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold hidden"
-            style={{ backgroundColor: match.home.color }}
-          >
-            {match.home.monogram}
-          </span>
-          <img
-            src={match.away.crest}
-            alt={match.away.name}
-            className="w-8 h-8 rounded-full flex-shrink-0 object-cover"
-            onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
-          />
-          <span
-            className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold hidden"
-            style={{ backgroundColor: match.away.color }}
-          >
-            {match.away.monogram}
-          </span>
+          {match.home.crest && (
+            <img
+              src={match.home.crest}
+              alt={match.home.name}
+              className="w-8 h-8 rounded-full flex-shrink-0 object-cover"
+              onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
+                e.currentTarget.style.display = 'none'
+              }}
+            />
+          )}
+          {!match.home.crest && (
+            <span
+              className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold"
+              style={{ backgroundColor: match.home?.color || '#6366f1' }}
+            >
+              {match.home?.monogram || match.home?.short}
+            </span>
+          )}
+          {match.away.crest && (
+            <img
+              src={match.away.crest}
+              alt={match.away.name}
+              className="w-8 h-8 rounded-full flex-shrink-0 object-cover"
+              onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
+                e.currentTarget.style.display = 'none'
+              }}
+            />
+          )}
+          {!match.away.crest && (
+            <span
+              className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold"
+              style={{ backgroundColor: match.away?.color || '#6366f1' }}
+            >
+              {match.away?.monogram || match.away?.short}
+            </span>
+          )}
         </div>
         <div className="min-w-0">
           <p className="font-medium truncate">{match.home.name} vs {match.away.name}</p>
@@ -110,12 +135,12 @@ function PickRow({ prediction, match, onRemove }) {
   )
 }
 
-function modelHit(saved, match) {
+function modelHit(saved: any, match: any): boolean | null {
   if (!match || match.status !== 'finished' || !saved.modelPick) {
     return null
   }
 
-  const resultMap = { home: 'home', away: 'away', draw: 'draw' }
+  const resultMap: Record<string, string> = { home: 'home', away: 'away', draw: 'draw' }
   const matchResult = resultMap[match.result] ?? match.result
   return saved.modelPick === matchResult
 }
@@ -126,7 +151,7 @@ export default function MyPredictions() {
   const { data, status: fetchStatus, error, reload } = useFetch(getMatches, [])
 
   const matchesById = useMemo(() => {
-    const map = {}
+    const map: Record<string, any> = {}
     for (const m of data?.matches ?? []) {
       map[m.id] = m
     }
@@ -136,7 +161,11 @@ export default function MyPredictions() {
   const stats = useMemo(() => summarise(predictions, matchesById), [predictions, matchesById])
 
   const grouped = useMemo(() => {
-    const groups = { all: predictions, pending: [], settled: [] }
+    const groups: { all: any[]; pending: any[]; settled: any[] } = { 
+      all: predictions, 
+      pending: [], 
+      settled: [] 
+    }
     for (const p of predictions) {
       const match = matchesById[p.matchId]
       const s = settle(p, match)

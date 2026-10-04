@@ -1,6 +1,10 @@
 import { cn } from '@/lib/utils'
 
-function Skeleton({ className, ...props }) {
+interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {
+  className?: string
+}
+
+function Skeleton({ className, ...props }: SkeletonProps) {
   return (
     <div
       className={cn('animate-pulse rounded-md bg-slate-200 dark:bg-slate-700', className)}

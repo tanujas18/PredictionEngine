@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Card, CardContent } from '@/components/ui/card'
 
-function setParam(searchParams, key, value) {
+function setParam(searchParams: URLSearchParams, key: string, value: string | null): string {
   const params = new URLSearchParams(searchParams)
   if (value === 'all' || value === '' || value == null) {
     params.delete(key)
@@ -52,20 +52,20 @@ const confidenceOrder = { high: 3, medium: 2, low: 1, undefined: 0 }
 
 export default function Matches() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const [leagues, setLeagues] = useState([])
+  const [leagues, setLeagues] = useState<string[]>([])
   const [sort, setSort] = useState('kickoff')
 
   const league = searchParams.get('league') || 'all'
   const status = searchParams.get('status') || 'all'
   const q = searchParams.get('q') || ''
 
-  const { data, status: fetchStatus, error, reload } = useFetch(
+  const { data, status: fetchStatus, error, reload } = useFetch<any>(
     () => getMatches({}),
     []
   )
 
-  const allMatches = useMemo(() => data?.matches ?? [], [data?.matches])
-  const fetchedLeagues = data?.leagues ?? []
+  const allMatches = useMemo(() => (data?.matches ?? []) as any[], [data?.matches])
+  const fetchedLeagues = (data?.leagues ?? []) as string[]
 
   if (fetchedLeagues.length > 0 && leagues.length === 0) {
     setLeagues(fetchedLeagues)
@@ -75,15 +75,15 @@ export default function Matches() {
     let filtered = allMatches
 
     if (league !== 'all') {
-      filtered = filtered.filter((m) => m.league === league)
+      filtered = filtered.filter((m: any) => m.league === league)
     }
     if (status !== 'all') {
-      filtered = filtered.filter((m) => m.status === status)
+      filtered = filtered.filter((m: any) => m.status === status)
     }
     if (q) {
       const needle = q.toLowerCase()
       filtered = filtered.filter(
-        (m) =>
+        (m: any) =>
           m.home.name.toLowerCase().includes(needle) ||
           m.away.name.toLowerCase().includes(needle) ||
           m.league.toLowerCase().includes(needle)
@@ -91,28 +91,28 @@ export default function Matches() {
     }
 
     if (sort === 'kickoff') {
-      filtered.sort((a, b) => new Date(a.kickoff) - new Date(b.kickoff))
+      filtered.sort((a: any, b: any) => new Date(a.kickoff).getTime() - new Date(b.kickoff).getTime())
     } else if (sort === 'confidence') {
-      filtered.sort((a, b) => {
-        const ca = confidenceOrder[a.model?.confidence] ?? 0
-        const cb = confidenceOrder[b.model?.confidence] ?? 0
+      filtered.sort((a: any, b: any) => {
+        const ca = confidenceOrder[a.model?.confidence as keyof typeof confidenceOrder] ?? 0
+        const cb = confidenceOrder[b.model?.confidence as keyof typeof confidenceOrder] ?? 0
         if (cb !== ca) return cb - ca
-        return new Date(a.kickoff) - new Date(b.kickoff)
+        return new Date(a.kickoff).getTime() - new Date(b.kickoff).getTime()
       })
     }
 
     return filtered
   }, [allMatches, league, status, q, sort])
 
-  const handleLeagueChange = (value) => {
+  const handleLeagueChange = (value: string) => {
     setSearchParams(setParam(searchParams, 'league', value))
   }
 
-  const handleStatusChange = (value) => {
+  const handleStatusChange = (value: string) => {
     setSearchParams(setParam(searchParams, 'status', value))
   }
 
-  const handleSearchChange = (e) => {
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
     setSearchParams(setParam(searchParams, 'q', value))
   }
@@ -125,8 +125,8 @@ export default function Matches() {
 
   // Calculate stats
   const totalMatches = allMatches.length
-  const upcomingCount = allMatches.filter(m => m.status === 'upcoming').length
-  const finishedCount = allMatches.filter(m => m.status === 'finished').length
+  const upcomingCount = allMatches.filter((m: any) => m.status === 'upcoming').length
+  const finishedCount = allMatches.filter((m: any) => m.status === 'finished').length
   const leagueCount = leagues.length
 
   return (
