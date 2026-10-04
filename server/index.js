@@ -18,6 +18,7 @@ import express from "express";
 import cors from "cors";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
+import { existsSync } from "fs";
 
 import { TEAMS, LEAGUES, getTeam } from "./data/teams.js";
 
@@ -227,13 +228,23 @@ app.use("/api", (req, res) => {
   res.status(404).json({ error: `Unknown endpoint ${req.method} ${req.originalUrl}` });
 });
 
-// Serve static files from client build
-app.use(express.static(CLIENT_DIST));
-
-// SPA fallback: serve index.html for all non-API routes
-app.get("*", (req, res) => {
-  res.sendFile(join(CLIENT_DIST, "index.html"));
-});
+// Serve static files from client build (optional - only if client/dist exists)
+if (existsSync(CLIENT_DIST)) {
+  app.use(express.static(CLIENT_DIST));
+  
+  // SPA fallback: serve index.html for all non-API routes
+  app.get("*", (req, res) => {
+    res.sendFile(join(CLIENT_DIST, "index.html"));
+  });
+} else {
+  // If no client build, just return a message for non-API routes
+  app.get("*", (req, res) => {
+    res.json({ 
+      message: "API Only - No client build available",
+      api: "/api/health"
+    });
+  });
+}
 
 app.listen(PORT, async () => {
   console.log(`\n  FIFA Prediction Engine API`);
